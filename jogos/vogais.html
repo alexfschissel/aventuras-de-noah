@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Encontre a letra cantora · As Aventuras de Noah</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <main class="jogo">
+    <a class="voltar" href="../jogos.html">← Voltar aos jogos</a>
+    <h1>Encontre a letra cantora</h1>
+    <p class="sub">Com qual letra a palavra começa?</p>
+
+    <div class="painel" id="painel">
+      <div class="estrelas" id="estrelas" aria-label="Estrelas ganhas"></div>
+      <div class="figura" id="figura" aria-hidden="true"></div>
+      <div class="palavra" id="palavra" aria-live="polite"></div>
+      <button class="ouvir" id="ouvir">🔊 Ouvir a palavra</button>
+      <div class="letras" id="letras"></div>
+      <div class="balao" id="balao" aria-live="polite"></div>
+    </div>
+  </main>
+
+  <script src="../assets/js/fala.js"></script>
+  <script>
+    const PALAVRAS = [
+      { emoji: "🐝", palavra: "ABELHA", letra: "A" },
+      { emoji: "✈️", palavra: "AVIÃO", letra: "A" },
+      { emoji: "🐘", palavra: "ELEFANTE", letra: "E" },
+      { emoji: "🫛", palavra: "ERVILHA", letra: "E" },
+      { emoji: "🏝️", palavra: "ILHA", letra: "I" },
+      { emoji: "🪀", palavra: "IOIÔ", letra: "I" }
+    ];
+    const VOGAIS = ["A", "E", "I"];
+    const ELOGIOS = ["Muito bem!", "Isso mesmo!", "Você acertou!", "Que legal!", "Parabéns!"];
+
+    const el = (id) => document.getElementById(id);
+    let rodadas = [];
+    let atual = 0;
+    let estrelas = 0;
+    let bloqueado = false;
+
+    function embaralhar(lista) {
+      const a = lista.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function desenharPalavra(item, revelar) {
+      const primeira = revelar
+        ? '<span class="vogal">' + item.palavra[0] + "</span>"
+        : '<span class="oculta">?</span>';
+      el("palavra").innerHTML = primeira + item.palavra.slice(1);
+    }
+
+    function iniciar() {
+      rodadas = embaralhar(PALAVRAS);
+      atual = 0;
+      estrelas = 0;
+      el("painel").classList.remove("fim");
+      mostrarRodada();
+    }
+
+    function mostrarRodada() {
+      const item = rodadas[atual];
+      bloqueado = false;
+      el("estrelas").textContent = "⭐".repeat(estrelas) + "☆".repeat(rodadas.length - estrelas);
+      el("figura").textContent = item.emoji;
+      el("figura").classList.remove("pular");
+      el("balao").textContent = "";
+      el("ouvir").style.display = "";
+      desenharPalavra(item, false);
+
+      const caixa = el("letras");
+      caixa.innerHTML = "";
+      VOGAIS.forEach((v) => {
+        const b = document.createElement("button");
+        b.className = "letra";
+        b.textContent = v;
+        b.setAttribute("aria-label", "Letra " + v);
+        b.addEventListener("click", () => escolher(b, v));
+        caixa.appendChild(b);
+      });
+
+      setTimeout(() => falar(item.palavra.toLowerCase() + "! Com qual letra começa?"), 300);
+    }
+
+    function escolher(botao, letra) {
+      if (bloqueado) return;
+      const item = rodadas[atual];
+      if (letra === item.letra) {
+        bloqueado = true;
+        estrelas++;
+        botao.classList.add("certa");
+        el("letras").querySelectorAll("button").forEach((b) => (b.disabled = true));
+        desenharPalavra(item, true);
+        el("figura").classList.add("pular");
+        const elogio = ELOGIOS[Math.floor(Math.random() * ELOGIOS.length)];
+        el("balao").textContent = elogio + " " + item.palavra + " começa com " + letra + "!";
+        el("estrelas").textContent = "⭐".repeat(estrelas) + "☆".repeat(rodadas.length - estrelas);
+        falar(elogio + " " + item.palavra.toLowerCase() + " começa com " + SOM_LETRA[letra] + "!", () => {
+          setTimeout(proxima, 700);
+        });
+      } else {
+        botao.classList.remove("tremer");
+        void botao.offsetWidth;
+        botao.classList.add("tremer");
+        el("balao").textContent = "Quase! Escute de novo e tente outra vez.";
+        falar("Quase! Escute: " + item.palavra.toLowerCase());
+      }
+    }
+
+    function proxima() {
+      atual++;
+      if (atual < rodadas.length) {
+        mostrarRodada();
+      } else {
+        terminar();
+      }
+    }
+
+    function terminar() {
+      el("painel").classList.add("fim");
+      el("figura").textContent = "🎉";
+      el("palavra").innerHTML = '<span class="vogal">A</span> <span class="vogal">E</span> <span class="vogal">I</span>';
+      el("ouvir").style.display = "none";
+      el("balao").textContent = "Você encontrou todas as letras cantoras!";
+      el("letras").innerHTML = "";
+      const de_novo = document.createElement("button");
+      de_novo.className = "botao";
+      de_novo.textContent = "↻ Jogar de novo";
+      de_novo.addEventListener("click", iniciar);
+      el("letras").appendChild(de_novo);
+      falar("Parabéns! Você encontrou todas as letras cantoras: á, é e i!");
+    }
+
+    el("ouvir").addEventListener("click", () => {
+      const item = rodadas[atual];
+      if (item) falar(item.palavra.toLowerCase());
+    });
+
+    // O navegador só libera a voz depois de um toque, por isso o jogo começa com um botão.
+    function telaInicial() {
+      el("estrelas").textContent = "";
+      el("figura").textContent = "🎵";
+      el("palavra").innerHTML = '<span class="vogal">A</span> <span class="vogal">E</span> <span class="vogal">I</span>';
+      el("ouvir").style.display = "none";
+      el("balao").textContent = "";
+      el("letras").innerHTML = "";
+      const comecar = document.createElement("button");
+      comecar.className = "botao";
+      comecar.textContent = "▶ Começar";
+      comecar.addEventListener("click", iniciar);
+      el("letras").appendChild(comecar);
+    }
+
+    telaInicial();
+  </script>
+</body>
+</html>

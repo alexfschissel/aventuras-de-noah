@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junte as letras · As Aventuras de Noah</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    .mais { font-size: 3rem; font-weight: 900; color: var(--suave); align-self: center; }
+    .letras.juntando .letra { transition: transform 0.6s ease-in-out; }
+    .letras.juntando .letra:first-child { transform: translateX(60px); }
+    .letras.juntando .letra:last-child { transform: translateX(-60px); }
+    .letras.juntando .mais { opacity: 0; transition: opacity 0.3s; }
+    .letra.silaba { width: auto; min-width: clamp(110px, 30vw, 170px); padding: 0 18px; }
+  </style>
+</head>
+<body>
+  <main class="jogo">
+    <a class="voltar" href="../jogos.html">← Voltar aos jogos</a>
+    <h1>Junte as letras</h1>
+    <p class="sub">Toque na primeira peça, depois na segunda, e veja o que acontece!</p>
+
+    <div class="painel" id="painel">
+      <div class="estrelas" id="estrelas" aria-label="Estrelas ganhas"></div>
+      <div class="palavra" id="resultado" aria-live="polite"></div>
+      <div class="letras" id="pecas"></div>
+      <div class="balao" id="balao" aria-live="polite"></div>
+      <div class="botoes" style="justify-content:center" id="acoes"></div>
+    </div>
+  </main>
+
+  <script src="../assets/js/fala.js"></script>
+  <script>
+    // Cada rodada junta duas peças. A ordem segue a progressão dos episódios.
+    const RODADAS = [
+      { pecas: ["M", "A"], resultado: "MA", fala: "ma" },
+      { pecas: ["M", "E"], resultado: "ME", fala: "mê" },
+      { pecas: ["M", "I"], resultado: "MI", fala: "mi" },
+      { pecas: ["MA", "MA"], resultado: "MAMA", fala: "mama" }
+    ];
+    const VOGAIS = "AEIOU";
+    const SOM_SILABA = { MA: "ma" };
+
+    const el = (id) => document.getElementById(id);
+    let atual = 0;
+    let passo = 0;
+
+    function colorir(texto) {
+      return texto
+        .split("")
+        .map((c) => '<span class="' + (VOGAIS.includes(c) ? "vogal" : "consoante") + '">' + c + "</span>")
+        .join("");
+    }
+
+    function somDaPeca(p) {
+      return SOM_LETRA[p] || SOM_SILABA[p] || p.toLowerCase();
+    }
+
+    function estrelas() {
+      el("estrelas").textContent = "⭐".repeat(atual) + "☆".repeat(RODADAS.length - atual);
+    }
+
+    function mostrarRodada() {
+      const r = RODADAS[atual];
+      passo = 0;
+      estrelas();
+      el("resultado").innerHTML = "";
+      el("balao").textContent = "Toque na primeira peça.";
+      el("acoes").innerHTML = "";
+
+      const caixa = el("pecas");
+      caixa.className = "letras";
+      caixa.innerHTML = "";
+      r.pecas.forEach((p, i) => {
+        if (i === 1) {
+          const mais = document.createElement("span");
+          mais.className = "mais";
+          mais.textContent = "+";
+          caixa.appendChild(mais);
+        }
+        const b = document.createElement("button");
+        const ehVogal = p.length === 1 && VOGAIS.includes(p);
+        b.className = "letra" + (ehVogal ? "" : p.length === 1 ? " consoante" : " silaba");
+        b.innerHTML = p.length === 1 ? p : colorir(p);
+        if (p.length > 1) b.style.background = "#fff";
+        b.setAttribute("aria-label", "Peça " + p);
+        b.addEventListener("click", () => tocar(b, i));
+        caixa.appendChild(b);
+      });
+    }
+
+    function tocar(botao, indice) {
+      const r = RODADAS[atual];
+      if (indice !== passo) {
+        botao.classList.remove("tremer");
+        void botao.offsetWidth;
+        botao.classList.add("tremer");
+        el("balao").textContent = passo === 0 ? "Comece pela primeira peça!" : "Agora a segunda peça!";
+        return;
+      }
+      botao.classList.add("escolhida");
+      falar(somDaPeca(r.pecas[indice]));
+      passo++;
+      if (passo === 1) {
+        el("balao").textContent = "Agora toque na segunda peça.";
+      } else {
+        el("balao").textContent = "";
+        setTimeout(juntar, 700);
+      }
+    }
+
+    function juntar() {
+      const r = RODADAS[atual];
+      el("pecas").classList.add("juntando");
+      setTimeout(() => {
+        el("pecas").innerHTML = "";
+        el("resultado").innerHTML = colorir(r.resultado);
+        el("resultado").classList.remove("pular");
+        void el("resultado").offsetWidth;
+        el("resultado").classList.add("pular");
+        const conta = r.pecas.join(" + ") + " = " + r.resultado;
+        el("balao").textContent = conta + "! Muito bem!";
+        const partes = r.pecas.map(somDaPeca).join("... ");
+        falar(partes + "... " + r.fala + "! Muito bem!", () => {
+          atual++;
+          estrelas();
+          const b = document.createElement("button");
+          b.className = "botao azul";
+          b.textContent = atual < RODADAS.length ? "Próxima →" : "🎉 Terminar";
+          b.addEventListener("click", atual < RODADAS.length ? mostrarRodada : terminar);
+          el("acoes").appendChild(b);
+        });
+      }, 650);
+    }
+
+    function terminar() {
+      el("resultado").innerHTML = colorir("MAMA");
+      el("pecas").innerHTML = "";
+      el("balao").textContent = "Você leu MA, ME, MI e MAMA! Você está aprendendo a ler!";
+      el("acoes").innerHTML = "";
+      const b = document.createElement("button");
+      b.className = "botao";
+      b.textContent = "↻ Jogar de novo";
+      b.addEventListener("click", () => { atual = 0; mostrarRodada(); });
+      el("acoes").appendChild(b);
+      falar("Parabéns! Você leu ma, mê, mi e mama! Você está aprendendo a ler!");
+    }
+
+    // A voz só é liberada depois de um toque, então começamos com um botão.
+    estrelas();
+    el("resultado").innerHTML = colorir("MA");
+    const comecar = document.createElement("button");
+    comecar.className = "botao";
+    comecar.textContent = "▶ Começar";
+    comecar.addEventListener("click", mostrarRodada);
+    el("acoes").appendChild(comecar);
+  </script>
+</body>
+</html>

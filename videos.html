@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vídeos · As Aventuras de Noah</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="topo-interno">
+      <a class="marca" href="index.html"><span class="marca-icone">N</span> As Aventuras de Noah</a>
+      <nav class="menu" aria-label="Menu principal">
+        <a href="index.html">Início</a>
+        <a href="videos.html" aria-current="page">Vídeos</a>
+        <a href="jogos.html">Jogos</a>
+        <a href="pais.html">Para os pais</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h1>Vídeos</h1>
+    <p class="sub">Assista com um adulto e repita os sons junto com o Noah!</p>
+
+    <h2>Episódios</h2>
+    <div class="grade" id="lista-episodios"></div>
+
+    <h2>Vídeos curtinhos</h2>
+    <div class="grade" id="lista-shorts"></div>
+  </main>
+
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Vídeo">
+    <div class="modal-caixa">
+      <div class="modal-video" id="modal-video"></div>
+      <button class="botao claro modal-fechar" id="fechar">✕ Fechar</button>
+    </div>
+  </div>
+
+  <footer class="rodape">
+    Os vídeos são exibidos pelo YouTube no modo de privacidade aprimorada. · <a href="pais.html">Para os pais</a>
+  </footer>
+
+  <script src="assets/js/videos.js"></script>
+  <script>
+    const modal = document.getElementById("modal");
+    const caixaVideo = document.getElementById("modal-video");
+
+    function abrir(id) {
+      caixaVideo.innerHTML =
+        '<iframe src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) +
+        '?autoplay=1&rel=0&modestbranding=1" title="Vídeo do Noah" ' +
+        'allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
+      modal.classList.add("aberto");
+    }
+
+    function fechar() {
+      caixaVideo.innerHTML = "";
+      modal.classList.remove("aberto");
+    }
+
+    document.getElementById("fechar").addEventListener("click", fechar);
+    modal.addEventListener("click", (e) => { if (e.target === modal) fechar(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") fechar(); });
+
+    function montar(lista, alvo) {
+      const el = document.getElementById(alvo);
+      lista.forEach((v) => {
+        const pronto = Boolean(v.youtube);
+        const cartao = document.createElement(pronto ? "button" : "div");
+        cartao.className = "cartao" + (pronto ? "" : " desligado");
+        if (pronto) {
+          cartao.style.border = "0";
+          cartao.style.padding = "0";
+          cartao.style.textAlign = "left";
+          cartao.style.font = "inherit";
+          cartao.style.cursor = "pointer";
+          cartao.addEventListener("click", () => abrir(v.youtube));
+        }
+        cartao.innerHTML =
+          '<img class="capa" src="' + v.capa + '" alt="">' +
+          '<div class="corpo">' +
+          (pronto ? "" : '<span class="selo breve">Em breve</span>') +
+          "<h3>" + (pronto ? "▶ " : "") + v.titulo + "</h3>" +
+          "<p>" + v.descricao + "</p></div>";
+        el.appendChild(cartao);
+      });
+    }
+
+    montar(window.VIDEOS, "lista-episodios");
+    montar(window.SHORTS, "lista-shorts");
+  </script>
+</body>
+</html>
