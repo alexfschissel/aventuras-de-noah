@@ -7,10 +7,10 @@ window.VIDEOS = [
     titulo: "Ep. 1 · As Letras Cantoras",
     descricao: "Noah descobre as vogais A, E e I e os sons que elas cantam. (4 min)",
     capa: "assets/img/ep01.jpg",
-    youtube: ""
+    youtube: "KrfWJpk-IcQ"
   },
   {
-    titulo: "Ep. 0 · A primeira palavra",
+    titulo: "Bônus · A primeira palavra",
     descricao: "A letra A, a sílaba MA e a primeira palavra: MAMA. (1 min)",
     capa: "assets/img/hero.jpg",
     youtube: ""
@@ -22,12 +22,12 @@ window.SHORTS = [
     titulo: "A de Abelha",
     descricao: "Vídeo curto: o som da letra A. (30 s)",
     capa: "assets/img/jogos.jpg",
-    youtube: ""
+    youtube: "GmjUhwth1kU"
   },
   {
     titulo: "M + A = MA",
     descricao: "Vídeo curto: juntando letras para ler MAMA. (33 s)",
     capa: "assets/img/ep01.jpg",
-    youtube: ""
+    youtube: "Bxy7Y3idNUY"
   }
 ];
